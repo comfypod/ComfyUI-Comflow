@@ -1,0 +1,250 @@
+2024/06/01 ÷‹¡˘ 14:01:22.57
+absl-py==2.1.0
+accelerate==0.30.1
+addict==2.4.0
+aiofiles==23.2.1
+aiohttp @ file:///D:/a/ComfyUI/cu121_python_deps/aiohttp-3.9.5-cp311-cp311-win_amd64.whl#sha256=88e311d98cc0bf45b62fc46c66753a83445f5ab20038bcc1b8a1cc05666f428a
+aiohttp-retry==2.8.3
+aiosignal @ file:///D:/a/ComfyUI/cu121_python_deps/aiosignal-1.3.1-py3-none-any.whl#sha256=f8376fb07dd1e86a584e4fcdec80b36b7f81aac666ebc724e2c090300dd83b17
+aiostream==0.5.2
+annotated-types==0.7.0
+antlr4-python3-runtime==4.9.3
+anyio==4.4.0
+astroid==2.15.0
+attrs @ file:///D:/a/ComfyUI/cu121_python_deps/attrs-23.2.0-py3-none-any.whl#sha256=99b87a485a5820b23b879f04c2305b44b951b502fd64be915879d77a7e8fc6f1
+audioread==3.0.1
+autopep8==1.6.0
+beautifulsoup4==4.12.3
+boto3==1.34.117
+botocore==1.34.117
+cachetools==5.3.3
+certifi @ file:///D:/a/ComfyUI/cu121_python_deps/certifi-2024.2.2-py3-none-any.whl#sha256=dc383c07b76109f368f6106eee2b593b04a011ea4d55f652c6ca24a754d1cdd1
+cffi @ file:///D:/a/ComfyUI/cu121_python_deps/cffi-1.16.0-cp311-cp311-win_amd64.whl#sha256=db8e577c19c0fda0beb7e0d4e09e0ba74b1e4c092e0e40bfa12fe05b6f6d75ba
+chardet==5.2.0
+charset-normalizer @ file:///D:/a/ComfyUI/cu121_python_deps/charset_normalizer-3.3.2-cp311-cp311-win_amd64.whl#sha256=663946639d296df6a2bb2aa51b60a2454ca1cb29835324c640dafb5ff2131a77
+click==8.1.7
+clip-interrogator==0.6.0
+cmake==3.29.3
+color-matcher==0.5.0
+colorama==0.4.6
+coloredlogs==15.0.1
+colorlog==6.8.2
+compel==2.0.2
+contourpy==1.2.1
+cryptography==42.0.7
+cssselect2==0.7.0
+cstr @ git+https://github.com/WASasquatch/cstr@0520c29a18a7a869a6e5983861d6f7a4c86f8e9b
+cycler==0.12.1
+ddt==1.7.2
+decorator==5.1.1
+Deprecated==1.2.14
+diffusers==0.28.0
+dill==0.3.6
+docstring-to-markdown==0.11
+docutils==0.21.2
+einops @ file:///D:/a/ComfyUI/cu121_python_deps/einops-0.8.0-py3-none-any.whl#sha256=9572fb63046264a862693b0a87088af3bdc8c068fde03de63453cbbde245465f
+embreex==2.17.7.post4
+fairscale==0.4.13
+fastapi==0.108.0
+ffmpy @ git+https://github.com/WASasquatch/ffmpy.git@f000737698b387ffaeab7cd871b0e9185811230d
+filelock @ file:///D:/a/ComfyUI/cu121_python_deps/filelock-3.14.0-py3-none-any.whl#sha256=43339835842f110ca7ae60f1e1c160714c5a6afd15a2873419ab185334975c0f
+flake8==6.0.0
+flatbuffers==24.3.25
+fonttools==4.53.0
+frozenlist @ file:///D:/a/ComfyUI/cu121_python_deps/frozenlist-1.4.1-cp311-cp311-win_amd64.whl#sha256=fb3c2db03683b5767dedb5769b8a40ebb47d6f7f45b1b3e3b4b51ec8ad9d9825
+fsspec @ file:///D:/a/ComfyUI/cu121_python_deps/fsspec-2024.5.0-py3-none-any.whl#sha256=e0fdbc446d67e182f49a70b82cf7889028a63588fde6b222521f10937b2b670c
+ftfy==6.2.0
+future==1.0.0
+fvcore==0.1.5.post20221221
+gdown==5.2.0
+gitdb==4.0.11
+GitPython==3.1.43
+grpcio==1.64.0
+grpclib==0.4.7
+h11==0.14.0
+h2==4.1.0
+hpack==4.0.0
+httpcore==1.0.5
+httptools==0.6.1
+httpx==0.27.0
+huggingface-hub @ file:///D:/a/ComfyUI/cu121_python_deps/huggingface_hub-0.23.2-py3-none-any.whl#sha256=48727a16e704d409c4bb5913613308499664f22a99743435dc3a13b23c485827
+humanfriendly==10.0
+hyperframe==6.0.1
+idna @ file:///D:/a/ComfyUI/cu121_python_deps/idna-3.7-py3-none-any.whl#sha256=82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0
+imageio==2.34.1
+imageio-ffmpeg==0.5.0
+img2texture @ git+https://github.com/WASasquatch/img2texture.git@a546609a915caf1dcb84a15bf44b5b639ad924e6
+importlib_metadata==7.1.0
+intel-openmp @ file:///D:/a/ComfyUI/cu121_python_deps/intel_openmp-2021.4.0-py2.py3-none-win_amd64.whl#sha256=eef4c8bcc8acefd7f5cd3b9384dbf73d59e2c99fc56545712ded913f43c4a94f
+iopath==0.1.10
+isort==5.12.0
+jax==0.4.28
+jaxlib==0.4.28
+jedi==0.18.2
+Jinja2 @ file:///D:/a/ComfyUI/cu121_python_deps/jinja2-3.1.4-py3-none-any.whl#sha256=bc5dd2abb727a5319567b7a813e6a2e7318c39f4f487cfe6c89c6f9c7d25197d
+jmespath==1.0.1
+joblib==1.4.2
+jsonschema==4.22.0
+jsonschema-specifications==2023.12.1
+kiwisolver==1.4.5
+kornia @ file:///D:/a/ComfyUI/cu121_python_deps/kornia-0.7.2-py2.py3-none-any.whl#sha256=411e09ccdc4efde351f90a81f35a6eb9fad3bcf58ac037cbec4d41a8364dd039
+kornia_rs @ file:///D:/a/ComfyUI/cu121_python_deps/kornia_rs-0.1.3-cp311-none-win_amd64.whl#sha256=24f547aa8c0f70951c36f80d396ec0dbf56a81ccb9ab7444b77d9c4b2d707939
+lark==1.1.9
+lazy-object-proxy==1.9.0
+lazy_loader==0.4
+librosa==0.10.2.post1
+lightning-utilities==0.11.2
+llvmlite==0.42.0
+lmdb==1.4.1
+lpips==0.1.4
+lxml==5.2.2
+mapbox-earcut==1.0.1
+Markdown==3.6
+markdown-it-py==3.0.0
+MarkupSafe @ file:///D:/a/ComfyUI/cu121_python_deps/MarkupSafe-2.1.5-cp311-cp311-win_amd64.whl#sha256=2b7c57a4dfc4f16f7142221afe5ba4e093e09e728ca65c51f5620c9aaeb9a617
+matplotlib==3.9.0
+matrix-client==0.4.0
+mccabe==0.7.0
+mdurl==0.1.2
+mediapipe==0.10.14
+mkl @ file:///D:/a/ComfyUI/cu121_python_deps/mkl-2021.4.0-py2.py3-none-win_amd64.whl#sha256=ceef3cafce4c009dd25f65d7ad0d833a0fbadc3d8903991ec92351fe5de1e718
+ml-dtypes==0.4.0
+modal==0.62.197
+mpmath @ file:///D:/a/ComfyUI/cu121_python_deps/mpmath-1.3.0-py3-none-any.whl#sha256=a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c
+msgpack==1.0.8
+multidict @ file:///D:/a/ComfyUI/cu121_python_deps/multidict-6.0.5-cp311-cp311-win_amd64.whl#sha256=2faa5ae9376faba05f630d7e5e6be05be22913782b927b19d12b8145968a85ea
+networkx @ file:///D:/a/ComfyUI/cu121_python_deps/networkx-3.3-py3-none-any.whl#sha256=28575580c6ebdaf4505b22c6256a2b9de86b316dc63ba9e93abde3d78dfdbcf2
+numba==0.59.1
+numexpr==2.10.0
+numpy @ file:///D:/a/ComfyUI/cu121_python_deps/numpy-1.26.4-cp311-cp311-win_amd64.whl#sha256=cd25bcecc4974d09257ffcd1f098ee778f7834c3ad767fe5db785be9a4aa9cb2
+omegaconf==2.3.0
+onnxruntime==1.18.0
+open-clip-torch==2.24.0
+opencv-contrib-python==4.9.0.80
+opencv-python==4.9.0.80
+opencv-python-headless==4.7.0.72
+opt-einsum==3.3.0
+packaging==23.0
+pandas==2.2.2
+parso==0.8.3
+piexif==1.1.3
+pilgram==1.2.1
+Pillow==9.5.0
+platformdirs==3.1.1
+pluggy==1.0.0
+pooch==1.8.1
+portalocker==2.8.2
+protobuf==4.25.3
+psutil @ file:///D:/a/ComfyUI/cu121_python_deps/psutil-5.9.8-cp37-abi3-win_amd64.whl#sha256=8db4c1b57507eef143a15a6884ca10f7c73876cdf5d51e713151c1236a0e68cf
+py-cpuinfo==9.0.0
+pycocoevalcap==1.2
+pycocotools==2.0.7
+pycodestyle==2.10.0
+pycollada==0.8
+pycparser @ file:///D:/a/ComfyUI/cu121_python_deps/pycparser-2.22-py3-none-any.whl#sha256=c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc
+pydantic==2.7.2
+pydantic_core==2.18.3
+pydocstyle==6.2.3
+pyflakes==3.0.1
+pygit2 @ file:///D:/a/ComfyUI/cu121_python_deps/pygit2-1.15.0-cp311-cp311-win_amd64.whl#sha256=6ba7d19469dd86fd328999816e2bccf231be59d61caf08c2a8a00561a659365a
+PyGithub==2.3.0
+Pygments==2.18.0
+PyJWT==2.8.0
+pylint==2.17.0
+PyMatting==1.1.12
+PyNaCl==1.5.0
+pyparsing==3.1.2
+pypng==0.20220715.0
+pyreadline3==3.4.1
+PySocks==1.7.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
+python-lsp-jsonrpc==1.0.0
+python-lsp-server==1.7.1
+pytoolconfig==1.2.5
+pytorch-lightning==2.2.5
+pytz==2024.1
+pywin32==306
+PyYAML @ file:///D:/a/ComfyUI/cu121_python_deps/PyYAML-6.0.1-cp311-cp311-win_amd64.whl#sha256=bf07ee2fef7014951eeb99f56f39c9bb4af143d8aa3c21b1677805985307da34
+qrcode==7.4.2
+referencing==0.35.1
+regex @ file:///D:/a/ComfyUI/cu121_python_deps/regex-2024.5.15-cp311-cp311-win_amd64.whl#sha256=9e717956dcfd656f5055cc70996ee2cc82ac5149517fc8e1b60261b907740201
+rembg==2.0.57
+reportlab==4.2.0
+requests @ file:///D:/a/ComfyUI/cu121_python_deps/requests-2.32.2-py3-none-any.whl#sha256=fc06670dd0ed212426dfeb94fc1b983d917c4f9847c863f313c9dfaaffb7c23c
+rich==13.7.1
+rope==1.7.0
+rpds-py==0.18.1
+Rtree==1.2.0
+s3transfer==0.10.1
+safetensors @ file:///D:/a/ComfyUI/cu121_python_deps/safetensors-0.4.3-cp311-none-win_amd64.whl#sha256=840b7ac0eff5633e1d053cc9db12fdf56b566e9403b4950b2dc85393d9b88d67
+scikit-image==0.23.2
+scikit-learn==1.5.0
+scipy @ file:///D:/a/ComfyUI/cu121_python_deps/scipy-1.13.1-cp311-cp311-win_amd64.whl#sha256=5713f62f781eebd8d597eb3f88b8bf9274e79eeabf63afb4a737abc6c84ad37b
+seaborn==0.13.2
+segment-anything==1.0
+sentencepiece==0.2.0
+shapely==2.0.4
+shellingham==1.5.4
+sigtools==4.0.1
+simpleeval==0.9.13
+six==1.16.0
+smmap==5.0.1
+sniffio==1.3.1
+snowballstemmer==2.2.0
+sounddevice==0.4.7
+soundfile==0.12.1
+soupsieve==2.5
+soxr==0.3.7
+spandrel @ file:///D:/a/ComfyUI/cu121_python_deps/spandrel-0.3.4-py3-none-any.whl#sha256=1b5585bcb0298fc817e5b556880431353f48770f98328c3ce54f4ed9768f2c13
+starlette==0.32.0.post1
+svg.path==6.3
+svglib==1.5.1
+sympy @ file:///D:/a/ComfyUI/cu121_python_deps/sympy-1.12-py3-none-any.whl#sha256=c3588cd4295d0c0f603d0f2ae780587e64e2efeedb3521e46b9bb1d08d184fa5
+synchronicity==0.6.7
+tabulate==0.9.0
+tb-nightly==2.17.0a20240531
+tbb @ file:///D:/a/ComfyUI/cu121_python_deps/tbb-2021.12.0-py3-none-win_amd64.whl#sha256=fc2772d850229f2f3df85f1109c4844c495a2db7433d38200959ee9265b34789
+tensorboard-data-server==0.7.2
+termcolor==2.4.0
+thop==0.1.1.post2209072238
+threadpoolctl==3.5.0
+tifffile==2024.5.22
+timm==0.6.13
+tinycss2==1.3.0
+tokenizers @ file:///D:/a/ComfyUI/cu121_python_deps/tokenizers-0.19.1-cp311-none-win_amd64.whl#sha256=ad57d59341710b94a7d9dbea13f5c1e7d76fd8d9bcd944a7a6ab0b0da6e0cc66
+toml==0.10.2
+tomli==2.0.1
+tomlkit==0.11.6
+torch @ file:///D:/a/ComfyUI/cu121_python_deps/torch-2.3.0%2Bcu121-cp311-cp311-win_amd64.whl#sha256=f7876ec20b42dd569e7a11c5af36febccc03830f63dfdedbd4026506e086cab6
+torchaudio @ file:///D:/a/ComfyUI/cu121_python_deps/torchaudio-2.3.0%2Bcu121-cp311-cp311-win_amd64.whl#sha256=a6881a8e1b55a9b8f80d2e23547f9ceeb49bc019fbce9a4da943c9590ad724ab
+torchmetrics==1.4.0.post0
+torchsde @ file:///D:/a/ComfyUI/cu121_python_deps/torchsde-0.2.6-py3-none-any.whl#sha256=19bf7ff02eec7e8e46ba1cdb4aa0f9db1c51d492524a16975234b467f7fc463b
+torchvision @ file:///D:/a/ComfyUI/cu121_python_deps/torchvision-0.18.0%2Bcu121-cp311-cp311-win_amd64.whl#sha256=3e5557512ec9a31a6ce33a1107827427ef50ad65e88cd35012161d7392ef144b
+tqdm @ file:///D:/a/ComfyUI/cu121_python_deps/tqdm-4.66.4-py3-none-any.whl#sha256=b75ca56b413b030bc3f00af51fd2c1a1a5eac6a0c1cca83cbb37a5c52abce644
+trampoline @ file:///D:/a/ComfyUI/cu121_python_deps/trampoline-0.1.2-py3-none-any.whl#sha256=36cc9a4ff9811843d177fc0e0740efbd7da39eadfe6e50c9e2937cbc06d899d9
+transformers==4.41.2
+trimesh==4.4.0
+typer==0.12.3
+types-certifi==2021.10.8.3
+types-toml==0.10.8.20240310
+typing_extensions @ file:///D:/a/ComfyUI/cu121_python_deps/typing_extensions-4.12.0-py3-none-any.whl#sha256=b349c66bea9016ac22978d800cfff206d5f9816951f12a7d0ec5578b0a819594
+tzdata==2024.1
+ujson==5.7.0
+ultralytics==8.2.27
+urllib3==1.26.18
+uvicorn==0.25.0
+vhacdx==0.0.6
+watchfiles==0.22.0
+wcwidth==0.2.13
+webencodings==0.5.1
+websockets==12.0
+Werkzeug==3.0.3
+whatthepatch==1.0.4
+wrapt==1.15.0
+xatlas==0.0.9
+xxhash==3.4.1
+yacs==0.1.8
+yapf==0.32.0
+yarl @ file:///D:/a/ComfyUI/cu121_python_deps/yarl-1.9.4-cp311-cp311-win_amd64.whl#sha256=d1d2532b340b692880261c15aee4dc94dd22ca5d61b9db9a8a361953d36410b1
+zipp==3.19.1
