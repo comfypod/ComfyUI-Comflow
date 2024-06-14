@@ -29,11 +29,11 @@ from globals import StreamingPrompt, Status, sockets, SimplePrompt, streaming_pr
 api = None
 api_task = None
 
-cd_enable_log = os.environ.get('CD_ENABLE_LOG', 'false').lower() == 'true'
-cd_enable_run_log = os.environ.get('CD_ENABLE_RUN_LOG', 'false').lower() == 'true'
-bypass_upload = os.environ.get('CD_BYPASS_UPLOAD', 'false').lower() == 'true'
+cd_enable_log = os.environ.get('COMFLOW_ENABLE_LOG', 'false').lower() == 'true'
+cd_enable_run_log = os.environ.get('COMFLOW_ENABLE_RUN_LOG', 'false').lower() == 'true'
+bypass_upload = os.environ.get('COMFLOW_BYPASS_UPLOAD', 'false').lower() == 'true'
 
-print("CD_BYPASS_UPLOAD", bypass_upload)
+print("COMFLOW_BYPASS_UPLOAD", bypass_upload)
 
 
 def clear_current_prompt(sid):
