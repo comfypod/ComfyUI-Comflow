@@ -1,52 +1,53 @@
-from io import BytesIO
-from aiohttp import web
-import os
-import requests
-import folder_paths
+import asyncio
+import copy
+import hashlib
 import json
-import server
-from PIL import Image
-import time
-import execution
+import logging
+import os
 import random
+import re
+import struct
+import threading
+import time
 import traceback
 import uuid
-import asyncio
-import logging
+from io import BytesIO
+from typing import Any
 from urllib.parse import quote
-import threading
-import hashlib
-import aiohttp
-import aiofiles
-from typing import List, Union, Any, Optional
-from PIL import Image
-import copy
-import struct
-import re
 
+import aiofiles
+import aiohttp
+import requests
+from PIL import Image
+from aiohttp import web
+
+import execution
+import folder_paths
+import server
 from globals import StreamingPrompt, Status, sockets, SimplePrompt, streaming_prompt_metadata, prompt_metadata
 
 api = None
 api_task = None
 
-cd_enable_log = os.environ.get('CD_ENABLE_LOG', 'false').lower() == 'true'
-cd_enable_run_log = os.environ.get('CD_ENABLE_RUN_LOG', 'false').lower() == 'true'
-bypass_upload = os.environ.get('CD_BYPASS_UPLOAD', 'false').lower() == 'true'
+config_enable_log = os.environ.get('COMFLOW_ENABLE_LOG', 'false').lower() == 'true'
+config_enable_run_log = os.environ.get('COMFLOW_ENABLE_RUN_LOG', 'false').lower() == 'true'
+bypass_upload = os.environ.get('COMFLOW_BYPASS_UPLOAD', 'false').lower() == 'true'
 
-print("CD_BYPASS_UPLOAD", bypass_upload)
+print("COMFLOW_BYPASS_UPLOAD", bypass_upload)
 
 
 def clear_current_prompt(sid):
     prompt_server = server.PromptServer.instance
     to_delete = list(streaming_prompt_metadata[sid].running_prompt_ids)  # Convert set to list
-    
+
     print("cleaning out prompt: ", to_delete)
     for id_to_delete in to_delete:
         delete_func = lambda a: a[1] == id_to_delete
         prompt_server.prompt_queue.delete_queue_item(delete_func)
         print("deleted prompt: ", id_to_delete, prompt_server.prompt_queue.get_tasks_remaining())
-        
+
     streaming_prompt_metadata[sid].running_prompt_ids.clear()
+
 
 def post_prompt(json_data):
     prompt_server = server.PromptServer.instance
@@ -90,10 +91,12 @@ def post_prompt(json_data):
     else:
         return {"error": "no prompt", "node_errors": []}
 
+
 def randomSeed(num_digits=15):
     range_start = 10 ** (num_digits - 1)
-    range_end = (10**num_digits) - 1
+    range_end = (10 ** num_digits) - 1
     return random.randint(range_start, range_end)
+
 
 def apply_random_seed_to_workflow(workflow_api):
     """
@@ -110,69 +113,71 @@ def apply_random_seed_to_workflow(workflow_api):
                 workflow_api[key]['inputs']['seed'] = randomSeed(8);
                 continue
             workflow_api[key]['inputs']['seed'] = randomSeed();
-            
+
+
 def apply_inputs_to_workflow(workflow_api: Any, inputs: Any, sid: str = None):
     # Loop through each of the inputs and replace them
     for key, value in workflow_api.items():
         if 'inputs' in value:
-            
+
             # Support websocket
             if sid is not None:
                 if (value["class_type"] == "ComflowWebsocketImageOutput"):
                     value['inputs']["client_id"] = sid
                 if (value["class_type"] == "ComflowWebsocketImageInput"):
                     value['inputs']["client_id"] = sid
-                    
+
             if "input_id" in value['inputs'] and inputs is not None and value['inputs']['input_id'] in inputs:
                 new_value = inputs[value['inputs']['input_id']]
-                
-                # Lets skip it if its an image
+
+                # Let's skip it if it's an image
                 if isinstance(new_value, Image.Image):
                     continue
-                
-                # Backward compactibility
+
+                # Backward compatibility
                 value['inputs']["input_id"] = new_value
-            
+
                 # Fix for external text default value
                 if (value["class_type"] == "ComflowInputText"):
                     value['inputs']["default_value"] = new_value
-                    
+
                 if (value["class_type"] == "ComflowInputCheckpoint"):
                     value['inputs']["default_value"] = new_value
-                    
+
                 if (value["class_type"] == "ComflowInputImageBatch"):
                     value['inputs']["images"] = new_value
-                
+
                 if value["class_type"] == "ComflowInputLora":
                     value["inputs"]["default_lora_name"] = new_value
-                
+
                 if value["class_type"] == "ComflowInputSlider":
                     value["inputs"]["default_value"] = new_value
-                    
+
                 if value["class_type"] == "ComflowInputBoolean":
                     value["inputs"]["default_value"] = new_value
+
 
 def send_prompt(sid: str, inputs: StreamingPrompt):
     # workflow_api = inputs.workflow_api
     workflow_api = copy.deepcopy(inputs.workflow_api)
-    
+
     # Random seed
     apply_random_seed_to_workflow(workflow_api)
-            
-    print("getting inputs" , inputs.inputs)
-    
+
+    print("getting inputs", inputs.inputs)
+
     apply_inputs_to_workflow(workflow_api, inputs.inputs, sid=sid)
-                
+
     print(workflow_api)
-                
+
     prompt_id = str(uuid.uuid4())
-            
+
     prompt = {
         "prompt": workflow_api,
-        "client_id": sid, #"comflow_instance", #api.client_id
+        "client_id": sid,  # "comflow_instance", #api.client_id
         "prompt_id": prompt_id
     }
-    
+
     try:
         res = post_prompt(prompt)
         inputs.running_prompt_ids.add(prompt_id)
@@ -188,16 +193,26 @@ def send_prompt(sid: str, inputs: StreamingPrompt):
         stack_trace = traceback.format_exc().strip()
         print(f"error: {error_type}, {e}")
         print(f"stack trace: {stack_trace_short}")
-       
+
+
 @server.PromptServer.instance.routes.post("/comflow/run")
 async def comflow_run(request):
-    prompt_server = server.PromptServer.instance
+    # prompt_server = server.PromptServer.instance
     data = await request.json()
+
+    prompt_is_valid, error_message = validate_prompt(data)
+    if not prompt_is_valid:
+        print(f"Invalid prompt: {error_message}")
+        return web.json_response({
+            "error": error_message
+        }, status=400)
+
+    # The prompt id generated from comfy deploy, can be None
+    prompt_id = data.get("prompt_id")
 
     # In older version, we use workflow_api, but this has inputs already swapped in nextjs frontend, which is tricky
     workflow_api = data.get("workflow_api")
-    # The prompt id generated from comfy deploy, can be None
-    prompt_id = data.get("prompt_id")
+
     inputs = data.get("inputs")
 
     # Now it handles directly in here
@@ -205,14 +220,14 @@ async def comflow_run(request):
     apply_inputs_to_workflow(workflow_api, inputs)
 
     prompt = {
+        "client_id": "comflow_instance",  # api.client_id
+        "prompt_id": prompt_id,
         "prompt": workflow_api,
-        "client_id": "comflow_instance", #api.client_id
-        "prompt_id": prompt_id
     }
 
     prompt_metadata[prompt_id] = SimplePrompt(
-        status_endpoint=data.get('status_endpoint'),
-        file_upload_endpoint=data.get('file_upload_endpoint'),
+        status_endpoint=data.get('status_endpoint', None),
+        file_upload_endpoint=data.get('file_upload_endpoint', None),
         workflow_api=workflow_api
     )
 
@@ -230,7 +245,7 @@ async def comflow_run(request):
                 "stack_trace": stack_trace
             }
         })
-         # When there are critical errors, the prompt is actually not run
+        # When there are critical errors, the prompt is actually not run
         await update_run(prompt_id, Status.FAILED)
         return web.Response(status=500, reason=f"{error_type}: {e}, {stack_trace_short}")
 
@@ -242,7 +257,7 @@ async def comflow_run(request):
     #             **res
     #         }
     #     })
-    
+
     if "node_errors" in res and res["node_errors"]:
         # Even tho there are node_errors it can still be run
         status = 400
@@ -257,6 +272,19 @@ async def comflow_run(request):
             await update_run(prompt_id, Status.FAILED)
 
     return web.json_response(res, status=status)
+
+
+def validate_prompt(prompt: dict) -> tuple[bool, str]:
+    """
+    Validates the prompt to ensure that it is in the correct format.
+    """
+    if "workflow_api" not in prompt:
+        return False, "No workflow_api provided"
+
+    if "prompt_id" not in prompt:
+        return False, "No prompt_id provided"
+
+    return True, ""
 
 
 def get_comfyui_path_from_file_path(file_path):
@@ -274,6 +302,7 @@ def get_comfyui_path_from_file_path(file_path):
 
     return file_path
 
+
 # Form ComfyUI Manager
 async def compute_sha256_checksum(filepath):
     print("computing sha256 checksum")
@@ -289,6 +318,7 @@ async def compute_sha256_checksum(filepath):
             sha256.update(chunk)
     return sha256.hexdigest()
 
+
 @server.PromptServer.instance.routes.get('/comflow/models')
 async def get_installed_models(request):
     # Directly return the list of paths as JSON
@@ -301,6 +331,7 @@ async def get_installed_models(request):
         new_dict[key] = value_json_compatible
     # print(new_dict)
     return web.json_response(new_dict)
+
 
 # This is start uploading the files to Comflow
 @server.PromptServer.instance.routes.post('/comflow/upload-file')
@@ -323,7 +354,7 @@ async def upload_file_endpoint(request):
     try:
         base = folder_paths.base_path
         file_path = os.path.join(base, file_path)
-        
+
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
             file_extension = os.path.splitext(file_path)[1]
@@ -380,11 +411,11 @@ async def upload_file_endpoint(request):
             return web.json_response({
                 "error": f"An error occurred while fetching data from {get_url}: {str(e)}"
             }, status=500)
-        
+
     return web.json_response({
         "error": f"File not uploaded"
     }, status=500)
-        
+
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Assuming the cache file is stored in the same directory as this script
@@ -392,6 +423,7 @@ CACHE_FILE_PATH = script_dir + '/file-hash-cache.json'
 
 # Global in-memory cache
 file_hash_cache = {}
+
 
 # Load cache from disk at startup
 def load_cache():
@@ -402,13 +434,16 @@ def load_cache():
     except (FileNotFoundError, json.JSONDecodeError):
         file_hash_cache = {}
 
+
 # Save cache to disk
 def save_cache():
     with open(CACHE_FILE_PATH, 'w') as cache_file:
         json.dump(file_hash_cache, cache_file)
 
+
 # Initialize cache on application start
 load_cache()
+
 
 @server.PromptServer.instance.routes.get('/comflow/get-file-hash')
 async def get_file_hash(request):
@@ -418,7 +453,7 @@ async def get_file_hash(request):
         return web.json_response({
             "error": "file_path is required"
         }, status=400)
-    
+
     try:
         # base = folder_paths.base_path
         # full_file_path = os.path.join(base, file_path)
@@ -436,7 +471,7 @@ async def get_file_hash(request):
 
             # Update the in-memory cache
             file_hash_cache[full_file_path] = file_hash
-            
+
             save_cache()
 
         return web.json_response({
@@ -449,8 +484,13 @@ async def get_file_hash(request):
         return web.json_response({
             "error": str(e)
         }, status=status)
-        
+
+
 async def update_realtime_run_status(realtime_id: str, status_endpoint: str, status: Status):
+    if status_endpoint is None:
+        print("skip upload status (status_endpoint is none)", status)
+        return
+
     body = {
         "run_id": realtime_id,
         "status": status.value,
@@ -459,6 +499,7 @@ async def update_realtime_run_status(realtime_id: str, status_endpoint: str, sta
     async with aiohttp.ClientSession() as session:
         async with session.post(status_endpoint, json=body) as response:
             pass
+
 
 @server.PromptServer.instance.routes.get('/comflow/ws')
 async def websocket_handler(request):
@@ -472,29 +513,29 @@ async def websocket_handler(request):
         sid = uuid.uuid4().hex
 
     sockets[sid] = ws
-    
+
     auth_token = request.rel_url.query.get('token', None)
     get_workflow_endpoint_url = request.rel_url.query.get('workflow_endpoint', None)
     realtime_id = request.rel_url.query.get('realtime_id', None)
     status_endpoint = request.rel_url.query.get('status_endpoint', None)
-    
+
     if auth_token is not None and get_workflow_endpoint_url is not None:
         async with aiohttp.ClientSession() as session:
             headers = {'Authorization': f'Bearer {auth_token}'}
             async with session.get(get_workflow_endpoint_url, headers=headers) as response:
                 if response.status == 200:
                     workflow = await response.json()
-                   
-                    print("Loaded workflow version ",workflow["version"])
-                    
+
+                    print("Loaded workflow version ", workflow["version"])
+
                     streaming_prompt_metadata[sid] = StreamingPrompt(
-                        workflow_api=workflow["workflow_api"], 
+                        workflow_api=workflow["workflow_api"],
                         auth_token=auth_token,
                         inputs={},
                         status_endpoint=status_endpoint,
                         file_upload_endpoint=request.rel_url.query.get('file_upload_endpoint', None),
                     )
-                    
+
                     await update_realtime_run_status(realtime_id, status_endpoint, Status.RUNNING)
                     # await send("workflow_api", workflow_api, sid)
                 else:
@@ -504,12 +545,12 @@ async def websocket_handler(request):
 
     try:
         # Send initial state to the new client
-        await send("status", { 'sid': sid }, sid)
+        await send("status", {'sid': sid}, sid)
 
         # Make sure when its connected via client, the full log is not being sent
-        if cd_enable_log and get_workflow_endpoint_url is None:
+        if config_enable_log and get_workflow_endpoint_url is None:
             await send_first_time_log(sid)
-            
+
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:
                 try:
@@ -528,7 +569,7 @@ async def websocket_handler(request):
                         pass
                 except json.JSONDecodeError:
                     print('Failed to decode JSON from message')
-            
+
             if msg.type == aiohttp.WSMsgType.BINARY:
                 data = msg.data
                 event_type, = struct.unpack("<I", data[:4])
@@ -563,15 +604,16 @@ async def websocket_handler(request):
                     # clear_current_prompt(sid)
                     # send_prompt(sid, streaming_prompt_metadata[sid])
                     print(f"Received {image_type} image of size {image.size} with input ID {input_id}")
-            
+
             if msg.type == aiohttp.WSMsgType.ERROR:
                 print('ws connection closed with exception %s' % ws.exception())
     finally:
         sockets.pop(sid, None)
-        
+
         if realtime_id is not None:
             await update_realtime_run_status(realtime_id, status_endpoint, Status.SUCCESS)
     return ws
+
 
 @server.PromptServer.instance.routes.get('/comflow/check-status')
 async def comflow_check_status(request):
@@ -584,7 +626,8 @@ async def comflow_check_status(request):
         return web.json_response({
             "message": "prompt_id not found"
         })
-        
+
+
 @server.PromptServer.instance.routes.get('/comflow/check-ws-status')
 async def comflow_check_ws_status(request):
     client_id = request.rel_url.query.get('client_id', None)
@@ -598,30 +641,33 @@ async def comflow_check_ws_status(request):
     else:
         return web.json_response({"message": "client_id not found"}, status=404)
 
+
 async def send(event, data, sid=None):
     try:
         # message = {"event": event, "data": data}
         if sid:
             ws = sockets.get(sid)
             if ws != None and not ws.closed:  # Check if the WebSocket connection is open and not closing
-                await ws.send_json({ 'event': event, 'data': data })
+                await ws.send_json({'event': event, 'data': data})
         else:
             for ws in sockets.values():
                 if not ws.closed:  # Check if the WebSocket connection is open and not closing
-                    await ws.send_json({ 'event': event, 'data': data })
+                    await ws.send_json({'event': event, 'data': data})
     except Exception as e:
         print(f"Exception: {e}")
         traceback.print_exc()
+
 
 logging.basicConfig(level=logging.INFO)
 
 prompt_server = server.PromptServer.instance
 send_json = prompt_server.send_json
 
+
 async def send_json_override(self, event, data, sid=None):
     # print("INTERNAL:", event, data, sid)
     prompt_id = data.get('prompt_id')
-    
+
     target_sid = sid
     if target_sid == "comflow_instance":
         target_sid = None
@@ -632,9 +678,11 @@ async def send_json_override(self, event, data, sid=None):
         asyncio.create_task(self.send_json_original(event, data, sid))
     ])
 
+    # print("send_json", event, data, sid)
+
     if event == 'execution_start':
         update_run(prompt_id, Status.RUNNING)
-        
+
         if prompt_id in prompt_metadata:
             prompt_metadata[prompt_id].start_time = time.perf_counter()
 
@@ -655,16 +703,18 @@ async def send_json_override(self, event, data, sid=None):
 
     if event == 'executing' and data.get('node') is not None:
         node = data.get('node')
-        
+
         if prompt_id in prompt_metadata:
             # if 'progress' not in prompt_metadata[prompt_id]:
             #     prompt_metadata[prompt_id]["progress"] = set()
-              
+
             prompt_metadata[prompt_id].progress.add(node)
-            calculated_progress = len(prompt_metadata[prompt_id].progress) / len(prompt_metadata[prompt_id].workflow_api)
+            calculated_progress = len(prompt_metadata[prompt_id].progress) / len(
+                prompt_metadata[prompt_id].workflow_api)
             # print("calculated_progress", calculated_progress)
-         
-            if prompt_metadata[prompt_id].last_updated_node is not None and prompt_metadata[prompt_id].last_updated_node == node:
+
+            if prompt_metadata[prompt_id].last_updated_node is not None and prompt_metadata[
+                prompt_id].last_updated_node == node:
                 return
             prompt_metadata[prompt_id].last_updated_node = node
             class_type = prompt_metadata[prompt_id].workflow_api[node]['class_type']
@@ -680,7 +730,7 @@ async def send_json_override(self, event, data, sid=None):
         if prompt_id in prompt_metadata:
             # if 'progress' not in prompt_metadata[prompt_id]:
             #     prompt_metadata[prompt_id].progress = set()
-           
+
             if 'nodes' in data:
                 for node in data.get('nodes', []):
                     prompt_metadata[prompt_id].progress.add(node)
@@ -701,23 +751,29 @@ async def send_json_override(self, event, data, sid=None):
             if class_type == "PreviewImage":
                 print("skipping preview image")
                 return
-            
+
         await update_run_with_output(prompt_id, data.get('output'), node_id=data.get('node'))
         # await update_run_with_output(prompt_id, data.get('output'), node_id=data.get('node'))
         # update_run_with_output(prompt_id, data.get('output'))
 
+
 # Global variable to keep track of the last read line number
 last_read_line_number = 0
+
 
 async def update_run_live_status(prompt_id, live_status, calculated_progress: float):
     if prompt_id not in prompt_metadata:
         return
-    
+
     if prompt_metadata[prompt_id].is_realtime is True:
         return
-    
+
     print("progress", calculated_progress)
-    
+
+    if prompt_metadata[prompt_id].status_endpoint is None:
+        print("skip upload status (status_endpoint is none)", live_status)
+        return
+
     status_endpoint = prompt_metadata[prompt_id].status_endpoint
     body = {
         "run_id": prompt_id,
@@ -735,7 +791,7 @@ def update_run(prompt_id: str, status: Status):
 
     if prompt_id not in prompt_metadata:
         return
-    
+
     # if prompt_metadata[prompt_id].start_time is None and status == Status.RUNNING:
     # if its realtime prompt we need to skip that.
     if prompt_metadata[prompt_id].is_realtime is True:
@@ -749,6 +805,11 @@ def update_run(prompt_id: str, status: Status):
             return
 
         status_endpoint = prompt_metadata[prompt_id].status_endpoint
+        if status_endpoint is None:
+            print("skip upload status (status_endpoint is none)", status)
+            prompt_metadata[prompt_id].status = status
+            return
+
         body = {
             "run_id": prompt_id,
             "status": status.value,
@@ -758,7 +819,7 @@ def update_run(prompt_id: str, status: Status):
         try:
             requests.post(status_endpoint, json=body)
 
-            if cd_enable_run_log and (status == Status.SUCCESS or status == Status.FAILED):
+            if config_enable_run_log and (status == Status.SUCCESS or status == Status.FAILED):
                 try:
                     with open(comfyui_file_path, 'r') as log_file:
                         # log_data = log_file.read()
@@ -766,7 +827,7 @@ def update_run(prompt_id: str, status: Status):
                         all_log_data = log_file.read()  # Read all log data
                         print("All log data before skipping:", all_log_data)  # Log all data before skipping
                         log_file.seek(0)  # Reset file pointer to the beginning
-                        
+
                         for _ in range(last_read_line_number):
                             next(log_file)
                         log_data = log_file.read()
@@ -788,21 +849,21 @@ def update_run(prompt_id: str, status: Status):
                         requests.post(status_endpoint, json=body)
                 except Exception as log_error:
                     print(f"Error reading log file: {log_error}")
-                
+
         except Exception as e:
             error_type = type(e).__name__
             stack_trace = traceback.format_exc().strip()
             print(f"Error occurred while updating run: {e} {stack_trace}")
         finally:
             prompt_metadata[prompt_id].status = status
-            
+
 
 async def upload_file(prompt_id, filename, subfolder=None, content_type="image/png", type="output"):
     """
     Uploads file to S3 bucket using S3 client object
     :return: None
     """
-    filename,output_dir = folder_paths.annotated_filepath(filename)
+    filename, output_dir = folder_paths.annotated_filepath(filename)
 
     # validation for security: prevent accessing arbitrary path
     if filename[0] == '/' or '..' in filename:
@@ -813,7 +874,7 @@ async def upload_file(prompt_id, filename, subfolder=None, content_type="image/p
 
     if output_dir is None:
         print(filename, "Upload failed: output_dir is None")
-        return 
+        return
 
     if subfolder != None:
         full_output_dir = os.path.join(output_dir, subfolder)
@@ -824,9 +885,13 @@ async def upload_file(prompt_id, filename, subfolder=None, content_type="image/p
     filename = os.path.basename(filename)
     file = os.path.join(output_dir, filename)
 
-    print("uploading file", file)
-
     file_upload_endpoint = prompt_metadata[prompt_id].file_upload_endpoint
+
+    if file_upload_endpoint is None:
+        print(f"Skipping upload file {file}, file_upload_endpoint is None")
+        return
+
+    print("Uploading file", file)
 
     filename = quote(filename)
     prompt_id = quote(prompt_id)
@@ -839,9 +904,9 @@ async def upload_file(prompt_id, filename, subfolder=None, content_type="image/p
     end_time = time.time()  # End timing after the request is complete
     print("Time taken for getting file upload endpoint: {:.2f} seconds".format(end_time - start_time))
     ok = result.json()
-    
+
     start_time = time.time()  # Start timing here
-    
+
     with open(file, 'rb') as f:
         data = f.read()
         headers = {
@@ -856,6 +921,7 @@ async def upload_file(prompt_id, filename, subfolder=None, content_type="image/p
                 end_time = time.time()  # End timing after the request is complete
                 print("Upload time: {:.2f} seconds".format(end_time - start_time))
 
+
 def have_pending_upload(prompt_id):
     if prompt_id in prompt_metadata and len(prompt_metadata[prompt_id].uploading_nodes) > 0:
         print("have pending upload ", len(prompt_metadata[prompt_id].uploading_nodes))
@@ -863,6 +929,7 @@ def have_pending_upload(prompt_id):
 
     print("no pending upload")
     return False
+
 
 def mark_prompt_done(prompt_id):
     """
@@ -874,6 +941,7 @@ def mark_prompt_done(prompt_id):
     if prompt_id in prompt_metadata:
         prompt_metadata[prompt_id].done = True
         print("Prompt done")
+
 
 def is_prompt_done(prompt_id: str):
     """
@@ -889,6 +957,7 @@ def is_prompt_done(prompt_id: str):
         return True
 
     return False
+
 
 # Use to handle upload error and send back to Comflow server
 async def handle_error(prompt_id, data, e: Exception):
@@ -907,6 +976,7 @@ async def handle_error(prompt_id, data, e: Exception):
     await update_file_status(prompt_id, data, False, have_error=True)
     print(body)
     print(f"Error occurred while uploading file: {e}")
+
 
 # Mark the current prompt requires upload, and block it from being marked as success
 async def update_file_status(prompt_id: str, data, uploading, have_error=False, node_id=None):
@@ -936,7 +1006,7 @@ async def update_file_status(prompt_id: str, data, uploading, have_error=False, 
             await send("uploading", {
                 "prompt_id": prompt_id,
             })
-   
+
     # if there are no nodes that are uploading, then we set the status to success
     elif not uploading and not have_pending_upload(prompt_id) and is_prompt_done(prompt_id=prompt_id):
         update_run(prompt_id, Status.SUCCESS)
@@ -944,6 +1014,7 @@ async def update_file_status(prompt_id: str, data, uploading, have_error=False, 
         await send("success", {
             "prompt_id": prompt_id,
         })
+
 
 async def handle_upload(prompt_id: str, data, key: str, content_type_key: str, default_content_type: str):
     items = data.get(key, [])
@@ -959,6 +1030,7 @@ async def handle_upload(prompt_id: str, data, key: str, content_type_key: str, d
             content_type=item.get(content_type_key, default_content_type)
         )
 
+
 # Upload files in the background
 async def upload_in_background(prompt_id: str, data, node_id=None, have_upload=True):
     try:
@@ -967,19 +1039,20 @@ async def upload_in_background(prompt_id: str, data, node_id=None, have_upload=T
         # This will also be mp4
         await handle_upload(prompt_id, data, 'gifs', "format", "image/gif")
         await handle_upload(prompt_id, data, 'mesh', "format", "application/octet-stream")
-            
+
         if have_upload:
             await update_file_status(prompt_id, data, False, node_id=node_id)
     except Exception as e:
         await handle_error(prompt_id, data, e)
 
+
 async def update_run_with_output(prompt_id, data, node_id=None):
     if prompt_id not in prompt_metadata:
         return
-        
+
     if prompt_metadata[prompt_id].is_realtime is True:
         return
-    
+
     status_endpoint = prompt_metadata[prompt_id].status_endpoint
 
     body = {
@@ -1001,11 +1074,13 @@ async def update_run_with_output(prompt_id, data, node_id=None):
         except Exception as e:
             await handle_error(prompt_id, data, e)
 
-    requests.post(status_endpoint, json=body)
+    if status_endpoint is not None:
+        requests.post(status_endpoint, json=body)
 
     await send('outputs_uploaded', {
         "prompt_id": prompt_id
     })
+
 
 prompt_server.send_json_original = prompt_server.send_json
 prompt_server.send_json = send_json_override.__get__(prompt_server, server.PromptServer)
@@ -1016,6 +1091,7 @@ log_file_path = os.path.join(two_dirs_up, 'comflow.log')
 comfyui_file_path = os.path.join(two_dirs_up, 'comfyui.log')
 
 last_read_line = 0
+
 
 async def watch_file_changes(file_path, callback):
     global last_read_line
@@ -1040,12 +1116,15 @@ async def send_first_time_log(sid):
         lines = file.readlines()
     await send("LOGS", ''.join(lines), sid)
 
+
 async def send_logs_to_websocket(logs):
     await send("LOGS", logs)
+
 
 def start_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
+
 
 def run_in_new_thread(coroutine):
     new_loop = asyncio.new_event_loop()
@@ -1053,5 +1132,6 @@ def run_in_new_thread(coroutine):
     t.start()
     asyncio.run_coroutine_threadsafe(coroutine, new_loop)
 
-if cd_enable_log:
+
+if config_enable_log:
     run_in_new_thread(watch_file_changes(log_file_path, send_logs_to_websocket))
